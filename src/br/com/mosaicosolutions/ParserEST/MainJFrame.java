@@ -5,25 +5,36 @@
  */
 package br.com.mosaicosolutions.ParserEST;
 
+import br.com.mosaicosolutions.ParserEST.UI.JFontChooser;
 import br.com.mosaicosolutions.parser.ParseException;
 import br.com.mosaicosolutions.parser.Parser;
 import br.com.mosaicosolutions.parser.TokenMgrError;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.io.StringReader;
+import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javafx.stage.FileChooser;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
+import jdk.nashorn.internal.runtime.ParserException;
 
 /**
  * JFrame Principal do programa.
  * @author BrunoXavier
  */
 public class MainJFrame extends javax.swing.JFrame {
+
     
-    //o arquivo atual.
-    private File currentFile;
-    //o título padrão do arquivo.
-    private final String defaultFileName = "untitled";
-    //armazena um valor se indica se o arquivo está salvo ou não.
-    private boolean fileSaved;
+    private About about;
     
+    private FileContext fileContext;
+    
+    private JFileChooser fileChooser;
     /**
      * Creates new form MainJFrame
      */
@@ -53,9 +64,10 @@ public class MainJFrame extends javax.swing.JFrame {
         jMenuItemExit = new javax.swing.JMenuItem();
         jMenuEdit = new javax.swing.JMenu();
         jMenuItemEditFont = new javax.swing.JMenuItem();
-        jMenuAbout = new javax.swing.JMenu();
-        jMenu1 = new javax.swing.JMenu();
+        jMenuParser = new javax.swing.JMenu();
         jMenuItem1 = new javax.swing.JMenuItem();
+        jMenuHelp = new javax.swing.JMenu();
+        jMenuAbout = new javax.swing.JMenuItem();
         jMenuExit = new javax.swing.JMenu();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -75,10 +87,20 @@ public class MainJFrame extends javax.swing.JFrame {
 
         jMenuItemNewFile.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_N, java.awt.event.InputEvent.CTRL_MASK));
         jMenuItemNewFile.setText("New");
+        jMenuItemNewFile.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItemNewFileActionPerformed(evt);
+            }
+        });
         jMenuFile.add(jMenuItemNewFile);
 
         jMenuItemOpenFile.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_O, java.awt.event.InputEvent.CTRL_MASK));
         jMenuItemOpenFile.setText("Open");
+        jMenuItemOpenFile.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItemOpenFileActionPerformed(evt);
+            }
+        });
         jMenuFile.add(jMenuItemOpenFile);
 
         jMenuItemSaveFile.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_S, java.awt.event.InputEvent.CTRL_MASK));
@@ -98,20 +120,45 @@ public class MainJFrame extends javax.swing.JFrame {
         jMenuEdit.setText("Edit");
 
         jMenuItemEditFont.setText("Font");
+        jMenuItemEditFont.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItemEditFontActionPerformed(evt);
+            }
+        });
         jMenuEdit.add(jMenuItemEditFont);
 
         jMenuBar.add(jMenuEdit);
 
-        jMenuAbout.setText("About");
-        jMenuBar.add(jMenuAbout);
-
-        jMenu1.setText("Parser");
+        jMenuParser.setText("Parser");
+        jMenuParser.setName("jMenuParser"); // NOI18N
 
         jMenuItem1.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_ENTER, java.awt.event.InputEvent.CTRL_MASK));
         jMenuItem1.setText("Start Parser");
-        jMenu1.add(jMenuItem1);
+        jMenuItem1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuParserActionPerformed(evt);
+            }
+        });
+        jMenuParser.add(jMenuItem1);
 
-        jMenuBar.add(jMenu1);
+        jMenuBar.add(jMenuParser);
+
+        jMenuHelp.setText("Help");
+        jMenuHelp.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuHelpActionPerformed(evt);
+            }
+        });
+
+        jMenuAbout.setText("About");
+        jMenuAbout.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuAboutActionPerformed(evt);
+            }
+        });
+        jMenuHelp.add(jMenuAbout);
+
+        jMenuBar.add(jMenuHelp);
 
         jMenuExit.setText("Exit");
         jMenuBar.add(jMenuExit);
@@ -134,11 +181,64 @@ public class MainJFrame extends javax.swing.JFrame {
 
     private void textEditorKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_textEditorKeyPressed
         // TODO add your handling code here:
-        if(fileSaved) {
-            fileSaved = false;
-            setUnsavedFileTitle();
-        }
+        setUnsavedFileTitle();
     }//GEN-LAST:event_textEditorKeyPressed
+
+    private void jMenuItemNewFileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItemNewFileActionPerformed
+        // TODO add your handling code here:
+        
+    }//GEN-LAST:event_jMenuItemNewFileActionPerformed
+
+    private void jMenuParserActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuParserActionPerformed
+        // TODO add your handling code here:
+        try{
+            if(textEditor.getText().isEmpty()){
+                JOptionPane.showMessageDialog(this, "Você não digitou nada", "atencão", JOptionPane.WARNING_MESSAGE);
+            }else{
+                this.startParser();
+                JOptionPane.showMessageDialog(this, "Parser executado com sucesso !", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+            }
+        }catch(ParseException | TokenMgrError ex){
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_jMenuParserActionPerformed
+
+    private void jMenuItemEditFontActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItemEditFontActionPerformed
+        // TODO add your handling code here:
+        JFontChooser fontChooser = new JFontChooser();
+        int result = fontChooser.showDialog(this);
+        if (result == JFontChooser.OK_OPTION)
+        {
+           textEditor.setFont(fontChooser.getSelectedFont());
+        }
+    }//GEN-LAST:event_jMenuItemEditFontActionPerformed
+
+    private void jMenuHelpActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuHelpActionPerformed
+        // TODO add your handling code here:
+        
+    }//GEN-LAST:event_jMenuHelpActionPerformed
+
+    private void jMenuAboutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuAboutActionPerformed
+        // TODO add your handling code here:
+        JOptionPane.showMessageDialog(this, about.toString(), "About", JOptionPane.INFORMATION_MESSAGE);
+    }//GEN-LAST:event_jMenuAboutActionPerformed
+
+    private void jMenuItemOpenFileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItemOpenFileActionPerformed
+        // TODO add your handling code here:
+        try{
+            if(fileContext.isFileSaved()){
+                if(fileChooser.showDialog(this, "Open") == JFileChooser.APPROVE_OPTION){
+                    loadTextEditor(fileChooser.getSelectedFile());
+                }
+            }else{
+                if(fileChooser.showDialog(this, "Open") == JFileChooser.APPROVE_OPTION){
+                    loadTextEditor(fileChooser.getSelectedFile());
+                }
+            }
+        }catch (IOException ex){
+            JOptionPane.showMessageDialog(this, "Erro ao tentar carregar o arquivo", "ERROR", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_jMenuItemOpenFileActionPerformed
 
     /**
      * Ponto de entrada do programa.
@@ -175,12 +275,12 @@ public class MainJFrame extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JMenu jMenu1;
-    private javax.swing.JMenu jMenuAbout;
+    private javax.swing.JMenuItem jMenuAbout;
     private javax.swing.JMenuBar jMenuBar;
     private javax.swing.JMenu jMenuEdit;
     private javax.swing.JMenu jMenuExit;
     private javax.swing.JMenu jMenuFile;
+    private javax.swing.JMenu jMenuHelp;
     private javax.swing.JMenuItem jMenuItem1;
     private javax.swing.JMenuItem jMenuItemEditFont;
     private javax.swing.JMenuItem jMenuItemExit;
@@ -188,6 +288,7 @@ public class MainJFrame extends javax.swing.JFrame {
     private javax.swing.JMenuItem jMenuItemOpenFile;
     private javax.swing.JMenuItem jMenuItemSaveFile;
     private javax.swing.JMenuItem jMenuItemSaveFileAs;
+    private javax.swing.JMenu jMenuParser;
     private javax.swing.JScrollPane jScrollPaneTextEditor;
     private javax.swing.JPopupMenu.Separator jSeparator;
     private br.com.mosaicosolutions.ParserEST.UI.JTextEditor textEditor;
@@ -197,15 +298,29 @@ public class MainJFrame extends javax.swing.JFrame {
      * Inicializa os atributos.
      */
     private void initFields() {
-        fileSaved = false;
-        setTitle(getTitle() + " - " + defaultFileName);
+        about = new About();
+        fileContext = new FileContext();
+        setTitle(about.getName() + " - " + FileContext.DEFAUL_FILE_NAME);
+        
+        fileChooser = new JFileChooser();
+        fileChooser.setDialogType(JFileChooser.OPEN_DIALOG);
+        fileChooser.setFileFilter(new javax.swing.filechooser.FileFilter(){
+            @Override
+            public boolean accept(File f){
+               return (f.getName().endsWith(".txt")) || f.getName().endsWith(".est") || f.isDirectory();
+            }
+            @Override
+            public String getDescription(){
+                return ".est | .txt";
+            }
+        });
     }
-    
     private void setUnsavedFileTitle() {
-        if(currentFile == null)     
-            setTitle(getTitle() + " - " + defaultFileName + " *");
-        else
-            setTitle(getTitle() + " - " + currentFile.getName() + " *");
+        if(fileContext.isFileDefined()){
+            setTitle(about.getName() + " - " + fileContext.getCurrentFileName() + " *");
+        }else{
+            setTitle(about.getName() + " - " + FileContext.DEFAUL_FILE_NAME + " *");
+        }
     }
     
     /**
@@ -216,5 +331,15 @@ public class MainJFrame extends javax.swing.JFrame {
     private void startParser() throws TokenMgrError, ParseException {
         Parser parser = new Parser(new StringReader(textEditor.getText()));
         parser.Start();
+    }
+
+    private void loadTextEditor(File selectedFile) throws IOException {
+        try(BufferedReader buffer = new BufferedReader(new FileReader(selectedFile))){
+            StringBuilder result = new StringBuilder();
+            while(buffer.ready()){
+                result.append(buffer.readLine());
+            }
+            textEditor.setText(result.toString());
+        }
     }
 }
