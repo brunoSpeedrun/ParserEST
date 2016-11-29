@@ -10,18 +10,16 @@ import br.com.mosaicosolutions.parser.ParseException;
 import br.com.mosaicosolutions.parser.Parser;
 import br.com.mosaicosolutions.parser.TokenMgrError;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.io.StringReader;
-import java.util.concurrent.ExecutionException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javafx.stage.FileChooser;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
-import jdk.nashorn.internal.runtime.ParserException;
+
 
 /**
  * JFrame Principal do programa.
@@ -29,12 +27,15 @@ import jdk.nashorn.internal.runtime.ParserException;
  */
 public class MainJFrame extends javax.swing.JFrame {
 
-    
+    //Sobre
     private About about;
-    
+    //Armazena o arquivo atual do editor.
     private FileContext fileContext;
+    //Dialogo para abrir arquivo.
+    private JFileChooser fileChooserOpenFile;
+    //Dialogo para salvar arquivo.
+    private JFileChooser fileChooserSaveFile;
     
-    private JFileChooser fileChooser;
     /**
      * Creates new form MainJFrame
      */
@@ -182,11 +183,12 @@ public class MainJFrame extends javax.swing.JFrame {
     private void textEditorKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_textEditorKeyPressed
         // TODO add your handling code here:
         setUnsavedFileTitle();
+        fileContext.setFileSaved(false);
     }//GEN-LAST:event_textEditorKeyPressed
 
     private void jMenuItemNewFileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItemNewFileActionPerformed
         // TODO add your handling code here:
-        
+        main(null);    
     }//GEN-LAST:event_jMenuItemNewFileActionPerformed
 
     private void jMenuParserActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuParserActionPerformed
@@ -226,14 +228,14 @@ public class MainJFrame extends javax.swing.JFrame {
     private void jMenuItemOpenFileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItemOpenFileActionPerformed
         // TODO add your handling code here:
         try{
-            if(fileContext.isFileSaved()){
-                if(fileChooser.showDialog(this, "Open") == JFileChooser.APPROVE_OPTION){
-                    loadTextEditor(fileChooser.getSelectedFile());
-                }
+            if(fileContext.isFileSaved() || isTextEditorEmpty()){
+               
+               openFile();
+               
             }else{
-                if(fileChooser.showDialog(this, "Open") == JFileChooser.APPROVE_OPTION){
-                    loadTextEditor(fileChooser.getSelectedFile());
-                }
+                
+                saveBeforeOpeningTheFile();
+                openFile();
             }
         }catch (IOException ex){
             JOptionPane.showMessageDialog(this, "Erro ao tentar carregar o arquivo", "ERROR", JOptionPane.ERROR_MESSAGE);
@@ -300,26 +302,24 @@ public class MainJFrame extends javax.swing.JFrame {
     private void initFields() {
         about = new About();
         fileContext = new FileContext();
-        setTitle(about.getName() + " - " + FileContext.DEFAUL_FILE_NAME);
+        setTitle(about.getProgramName() + " - " + FileContext.DEFAUL_FILE_NAME);
         
-        fileChooser = new JFileChooser();
-        fileChooser.setDialogType(JFileChooser.OPEN_DIALOG);
-        fileChooser.setFileFilter(new javax.swing.filechooser.FileFilter(){
-            @Override
-            public boolean accept(File f){
-               return (f.getName().endsWith(".txt")) || f.getName().endsWith(".est") || f.isDirectory();
-            }
-            @Override
-            public String getDescription(){
-                return ".est | .txt";
-            }
-        });
+        fileChooserOpenFile = new JFileChooser();
+        fileChooserOpenFile.setDialogType(JFileChooser.OPEN_DIALOG);
+        fileChooserOpenFile.setFileFilter(new ESTFileFilter());
+        
+        fileChooserSaveFile = new JFileChooser(new File("/home/me/Documents"));
+        fileChooserSaveFile.setDialogType(JFileChooser.SAVE_DIALOG);
     }
+    
+    /**
+     * Define o título como não salvo.
+     */
     private void setUnsavedFileTitle() {
         if(fileContext.isFileDefined()){
-            setTitle(about.getName() + " - " + fileContext.getCurrentFileName() + " *");
+            setTitle(about.getProgramName() + " - " + fileContext.getCurrentFileName() + " *");
         }else{
-            setTitle(about.getName() + " - " + FileContext.DEFAUL_FILE_NAME + " *");
+            setTitle(about.getProgramName() + " - " + FileContext.DEFAUL_FILE_NAME + " *");
         }
     }
     
@@ -333,6 +333,11 @@ public class MainJFrame extends javax.swing.JFrame {
         parser.Start();
     }
 
+    /**
+     * Carrega o editor de texto a partir de um arquivo.
+     * @param selectedFile O arquivo que será carregado no editor.
+     * @throws IOException Se o arquivo não existir.
+     */
     private void loadTextEditor(File selectedFile) throws IOException {
         try(BufferedReader buffer = new BufferedReader(new FileReader(selectedFile))){
             StringBuilder result = new StringBuilder();
@@ -341,5 +346,86 @@ public class MainJFrame extends javax.swing.JFrame {
             }
             textEditor.setText(result.toString());
         }
+    }
+    
+    /**
+     * Método chamado antes do dialogo abrir arquivo. Este método é chamado quando
+     * o programa vai abrir o arquivo, porém o arquivo atual não esta salvo.
+     * @throws IOException Se o arquivo não existir.
+     */
+    private void saveBeforeOpeningTheFile() throws IOException {
+        
+        int dialogResult = JOptionPane.showConfirmDialog(this, "Deseja Salvar o arquivo Atual");
+        
+        if(dialogResult == JOptionPane.YES_OPTION){
+            if(fileContext.isFileDefined()) {
+                saveCurrentFile();
+                fileContext.setFileSaved(true);
+                updateTitle();
+            }
+            else {
+                saveAs(); 
+            }
+        }
+    }
+    
+    /**
+     * Salva o arquivo atual.
+     * @throws IOException Se o arquivo não existir.
+     */
+    private void saveCurrentFile() throws IOException {
+        saveInFile(fileContext.getCurrentFile());
+    }
+    
+    /**
+     * Salvar Como...
+     * @throws IOException Se o arquivo não existir.
+     */
+    private void saveAs() throws IOException {
+        if(fileChooserSaveFile.showSaveDialog(this) == JFileChooser.APPROVE_OPTION){
+            saveInFile(fileChooserSaveFile.getSelectedFile());
+            fileContext.setCurrentFile(fileChooserSaveFile.getSelectedFile());
+            fileContext.setFileSaved(true);
+            updateTitle();
+        }   
+    }
+    
+    /**
+     * Salva o texto do editor no arquivo especificado.
+     * @param selectedFile O arquivo onde será salvo o texto do editor.
+     * @throws IOException Se o arquivo não existir.
+     */
+    private void saveInFile(File selectedFile) throws IOException {
+        try(BufferedWriter buffer = new BufferedWriter(new PrintWriter(new FileWriter(selectedFile)))){
+            buffer.write(textEditor.getText());
+        }
+    }
+    
+    /**
+     * Abre o arquivo e carrega seu conteúdo no editor.
+     * @throws IOException 
+     */
+    private void openFile() throws IOException {
+        if(fileChooserOpenFile.showDialog(this, "Open") == JFileChooser.APPROVE_OPTION){
+            loadTextEditor(fileChooserOpenFile.getSelectedFile());
+            fileContext.setCurrentFile(fileChooserOpenFile.getSelectedFile());
+            fileContext.setFileSaved(true);
+            updateTitle();
+        }
+    }
+    
+    /**
+     * Testa se o editor está vazio.
+     * @return true, se não houver nada no escrito no editor, caso contrário false.
+     */
+    private boolean isTextEditorEmpty() {
+        return textEditor.getText().isEmpty();
+    }
+    
+    /**
+     * Atualiza o título do programa. 
+     */
+    private void updateTitle() {
+        setTitle(about.getProgramName() + " - " + fileContext.getCurrentFileName());
     }
 }

@@ -10,13 +10,13 @@ package br.com.mosaicosolutions.ParserEST;
  * @author johnnysmartins
  */
 public class About {
-    private final String   name;
+    private final String   programName;
     private final String   version;
     private final String   description;
     private final String[] autors;
 
     public About() {
-        name        = "Parser EST";
+        programName = "Parser EST";
         version     = "1.0";
         description = "A syntactic analyzer for a fictitious EST language using java swing.";
         autors      = new String[]{"Anderson Oliveira","Bruno Xavier de Moura", "Johnnys Martins"
@@ -26,10 +26,10 @@ public class About {
     
     
     /**
-     * @return the name
+     * @return the programName
      */
-    public String getName() {
-        return name;
+    public String getProgramName() {
+        return programName;
     }
 
     /**
@@ -56,7 +56,7 @@ public class About {
     @Override
     public String toString(){
         StringBuilder str = new StringBuilder();
-        str.append(getName()).append("\n\n");
+        str.append(getProgramName()).append("\n\n");
         str.append(getDescription()).append("\n\n");
         str.append("Version: ").append(getVersion()).append("\n\n");
         str.append("Autors: ").append(java.util.Arrays.toString(autors)).append("\n");
