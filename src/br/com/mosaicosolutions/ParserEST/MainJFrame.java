@@ -106,10 +106,20 @@ public class MainJFrame extends javax.swing.JFrame {
 
         jMenuItemSaveFile.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_S, java.awt.event.InputEvent.CTRL_MASK));
         jMenuItemSaveFile.setText("Save");
+        jMenuItemSaveFile.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItemSaveFileActionPerformed(evt);
+            }
+        });
         jMenuFile.add(jMenuItemSaveFile);
 
         jMenuItemSaveFileAs.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_B, java.awt.event.InputEvent.CTRL_MASK));
         jMenuItemSaveFileAs.setText("Save As...");
+        jMenuItemSaveFileAs.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItemSaveFileAsActionPerformed(evt);
+            }
+        });
         jMenuFile.add(jMenuItemSaveFileAs);
         jMenuFile.add(jSeparator);
 
@@ -241,6 +251,29 @@ public class MainJFrame extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Erro ao tentar carregar o arquivo", "ERROR", JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_jMenuItemOpenFileActionPerformed
+
+    private void jMenuItemSaveFileAsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItemSaveFileAsActionPerformed
+        // TODO add your handling code here:
+        try{                                   
+            saveAs();
+                
+        }catch (IOException ex){
+            JOptionPane.showMessageDialog(this, "Erro ao salvar o arquivo.", "ERROR", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_jMenuItemSaveFileAsActionPerformed
+
+    private void jMenuItemSaveFileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItemSaveFileActionPerformed
+        // TODO add your handling code here:
+        try {
+            if(fileContext.isFileDefined()){
+                saveCurrentFile();
+            }else{
+                saveAs();
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Erro ao salvar o arquivo.", "ERROR", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_jMenuItemSaveFileActionPerformed
 
     /**
      * Ponto de entrada do programa.
@@ -375,6 +408,8 @@ public class MainJFrame extends javax.swing.JFrame {
      */
     private void saveCurrentFile() throws IOException {
         saveInFile(fileContext.getCurrentFile());
+        fileContext.setFileSaved(true);
+        updateTitle();
     }
     
     /**
