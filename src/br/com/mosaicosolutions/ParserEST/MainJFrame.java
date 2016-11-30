@@ -69,7 +69,6 @@ public class MainJFrame extends javax.swing.JFrame {
         jMenuItem1 = new javax.swing.JMenuItem();
         jMenuHelp = new javax.swing.JMenu();
         jMenuAbout = new javax.swing.JMenuItem();
-        jMenuExit = new javax.swing.JMenu();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Parser EST");
@@ -123,7 +122,13 @@ public class MainJFrame extends javax.swing.JFrame {
         jMenuFile.add(jMenuItemSaveFileAs);
         jMenuFile.add(jSeparator);
 
+        jMenuItemExit.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_W, java.awt.event.InputEvent.CTRL_MASK));
         jMenuItemExit.setText("Exit");
+        jMenuItemExit.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItemExitActionPerformed(evt);
+            }
+        });
         jMenuFile.add(jMenuItemExit);
 
         jMenuBar.add(jMenuFile);
@@ -170,9 +175,6 @@ public class MainJFrame extends javax.swing.JFrame {
         jMenuHelp.add(jMenuAbout);
 
         jMenuBar.add(jMenuHelp);
-
-        jMenuExit.setText("Exit");
-        jMenuBar.add(jMenuExit);
 
         setJMenuBar(jMenuBar);
 
@@ -275,6 +277,24 @@ public class MainJFrame extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_jMenuItemSaveFileActionPerformed
 
+    private void jMenuItemExitActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItemExitActionPerformed
+        // TODO add your handling code here:
+        try {
+            if(isTextEditorEmpty() || fileContext.isFileSaved()){
+                exit();
+            }else{
+                if(fileContext.isFileDefined()){
+                   saveCurrentFile();
+                }else{
+                   saveAs(); 
+                }                
+                exit();
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Erro ao salvar o arquivo.", "ERROR", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_jMenuItemExitActionPerformed
+
     /**
      * Ponto de entrada do programa.
      * @param args the command line arguments
@@ -313,7 +333,6 @@ public class MainJFrame extends javax.swing.JFrame {
     private javax.swing.JMenuItem jMenuAbout;
     private javax.swing.JMenuBar jMenuBar;
     private javax.swing.JMenu jMenuEdit;
-    private javax.swing.JMenu jMenuExit;
     private javax.swing.JMenu jMenuFile;
     private javax.swing.JMenu jMenuHelp;
     private javax.swing.JMenuItem jMenuItem1;
@@ -462,5 +481,11 @@ public class MainJFrame extends javax.swing.JFrame {
      */
     private void updateTitle() {
         setTitle(about.getProgramName() + " - " + fileContext.getCurrentFileName());
+    }
+    private void exit() {
+        int result = JOptionPane.showConfirmDialog(this,
+        "Você realmente quer sair ?",
+        "Confirm Quit", JOptionPane.YES_NO_CANCEL_OPTION);
+        System.exit(0);
     }
 }
