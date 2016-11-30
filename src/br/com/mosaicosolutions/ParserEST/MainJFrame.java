@@ -283,11 +283,7 @@ public class MainJFrame extends javax.swing.JFrame {
             if(isTextEditorEmpty() || fileContext.isFileSaved()){
                 exit();
             }else{
-                if(fileContext.isFileDefined()){
-                   saveCurrentFile();
-                }else{
-                   saveAs(); 
-                }                
+                saveBeforingExit();            
                 exit();
             }
         } catch (Exception ex) {
@@ -403,7 +399,7 @@ public class MainJFrame extends javax.swing.JFrame {
     /**
      * Método chamado antes do dialogo abrir arquivo. Este método é chamado quando
      * o programa vai abrir o arquivo, porém o arquivo atual não esta salvo.
-     * @throws IOException Se o arquivo não existir.
+     * @throws saveBeIOException Se o arquivo não existir.
      */
     private void saveBeforeOpeningTheFile() throws IOException {
         
@@ -486,6 +482,18 @@ public class MainJFrame extends javax.swing.JFrame {
         int result = JOptionPane.showConfirmDialog(this,
         "Você realmente quer sair ?",
         "Confirm Quit", JOptionPane.YES_NO_CANCEL_OPTION);
-        System.exit(0);
+        if (result == JOptionPane.YES_OPTION) {
+            System.exit(0);
+        }
+    }
+    private void saveBeforingExit() throws IOException {
+        int result = JOptionPane.showConfirmDialog(this,"Você gostaria de salvar ?","Confirm save", JOptionPane.YES_NO_OPTION);
+        if(result == JOptionPane.YES_OPTION){
+        if(fileContext.isFileDefined()){
+                   saveCurrentFile();
+                }else{
+                   saveAs(); 
+                } 
+        }
     }
 }
